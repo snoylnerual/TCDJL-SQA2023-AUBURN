@@ -7,15 +7,22 @@ import constants
 import parser 
 import os 
 from itertools import combinations
+import simpleLogger as logger
 
 def getYAMLFiles(path_to_dir):
+    logger.info("===========================================================================")
+    logger.info("Logging YAML File Retrieval")
+    logger.info("Checking valid path to file")
     valid_  = [] 
     for root_, dirs, files_ in os.walk( path_to_dir ):
-       for file_ in files_:
-           full_p_file = os.path.join(root_, file_)
-           if(os.path.exists(full_p_file)):
-             if (full_p_file.endswith( constants.YAML_EXTENSION  ) or full_p_file.endswith( constants.YML_EXTENSION  )  ):
-               valid_.append(full_p_file)
+        for file_ in files_:
+            full_p_file = os.path.join(root_, file_)
+            if(os.path.exists(full_p_file)):
+                logger.info('Found path to file: ', str(full_p_file))
+                logger.info("Checking if file is a valid YAML file")
+                if (full_p_file.endswith( constants.YAML_EXTENSION  ) or full_p_file.endswith( constants.YML_EXTENSION  )  ):
+                    valid_.append(full_p_file)
+                    logger.info('Valid file found: ', str(valid_))
     return valid_ 
 
 def constructHelmString(hiera_tuple): 
@@ -54,7 +61,7 @@ def getMatchingTemplates(path2script, hierarchy_ls):
 def getValidTaints(  lis_template_matches ): 
     '''
     provides a mapping between the key where the secret occurred and the 
-    files that re affected by teh key 
+    files that re-affected by the key 
     '''
     taint_lis  = []
     for match in lis_template_matches:
@@ -72,6 +79,8 @@ def mineSecretGraph( path2script, yaml_dict , secret_dict ):
     Need to provide script path, script dict, dictionary of secrets that appear for the script  
     '''
 
+    logger.info("===========================================================================")
+    logger.info("Logging Secret Graph Mining")
     within_match_head = None 
     hierarchy_list = []
     for k_, v_ in secret_dict.items():
@@ -80,7 +89,6 @@ def mineSecretGraph( path2script, yaml_dict , secret_dict ):
                 hierarchy_keys = parser.keyMiner(yaml_dict, value)
                 hierarchy_keys = [x_ for x_ in hierarchy_keys if x_ != constants.YAML_SKIPPING_TEXT ] 
                 compo_hiera_keys = [ constants.DOT_SYMBOL.join(str_) for str_ in combinations( hierarchy_keys , 2 )] ## take 2 strings at a time 
-                # print(compo_hiera_keys) 
                 for h_key in hierarchy_keys:
                     hierarchy_list.append( (h_key, k_ , v_) )
                 '''
@@ -106,13 +114,19 @@ def mineSecretGraph( path2script, yaml_dict , secret_dict ):
 
 
 def getSHFiles(path_to_dir):
+    logger.info("===========================================================================")
+    logger.info("Logging SH File Retrieval")
+    logger.info("Checking valid path to file")
     valid_  = [] 
     for root_, _, files_ in os.walk( path_to_dir ):
-       for file_ in files_:
-           full_p_file = os.path.join(root_, file_)
-           if(os.path.exists(full_p_file)):
-             if (full_p_file.endswith( constants.SH_EXTENSION  )  ):
-               valid_.append(full_p_file)
+        for file_ in files_:
+            full_p_file = os.path.join(root_, file_)
+            if(os.path.exists(full_p_file)):
+                logger.info('Found path to file: ', str(full_p_file))
+                logger.info("Checking if file is a valid SH file")
+                if (full_p_file.endswith( constants.SH_EXTENSION  )  ):
+                    valid_.append(full_p_file)
+                    logger.info('Valid file found: ', str(valid_))
     return valid_ 
 
 

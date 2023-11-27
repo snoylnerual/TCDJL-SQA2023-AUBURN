@@ -6,10 +6,10 @@ Source Code to Run Tool on All Kubernetes Manifests
 import scanner 
 import pandas as pd 
 import constants
-import logging
+import simpleLogger as logger
 
 def getCountFromAnalysis(ls_):
-    list2ret           = []
+    list2ret = []
     for tup_ in ls_:
         within_sec_cnt = 0 
         dir_name       = tup_[0]
@@ -80,8 +80,6 @@ if __name__ == '__main__':
     # OUTPUT_FILE_CSV = '/Users/arahman/Documents/OneDriveWingUp/OneDrive-TennesseeTechUniversity/Research/Kubernetes/StaticTaint/data/V16_BRINTO_OUTPUT.csv'
 
     # take sarif_json from scanner
+    logger.createLoggerObj()
+    logger.info("Initializing Logging")
     main()
-
-
-
-
