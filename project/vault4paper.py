@@ -3,7 +3,6 @@ from itertools import count
 from venv import create
 import hvac 
 import random 
-import logging
 
 '''
 1. Install Vault 
