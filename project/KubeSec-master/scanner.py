@@ -12,6 +12,9 @@ import numpy as np
 import json
 from sarif_om import *
 from jschema_to_python.to_json import to_json
+from simpleLogger import createLoggerObj
+logging = createLoggerObj()
+
 
 '''Global SarifLog Object definition and Rule definition for SLI-KUBE. Rule IDs are ordered by the sequence as it appears in the TOSEM paper'''
 
@@ -70,7 +73,7 @@ def getYAMLFiles(path_to_dir):
                valid_.append(full_p_file)
     return valid_ 
 
-def isValidUserName(uName): 
+def isValidUserName(uName):
     valid = True
     if (isinstance( uName , str)  ): 
         if( any(z_ in uName for z_ in constants.FORBIDDEN_USER_NAMES )   ): 
@@ -540,39 +543,44 @@ def scanForMissingNetworkPolicy(path_script ):
     return dic  
 
 def scanForTruePID(path_script ):
+    logging.info("Starting scanForTruePID for script: %s", path_script)
     dic, lis   = {}, []
-    if ( parser.checkIfValidK8SYaml( path_script )  ): 
-        cnt = 0 
-        dict_as_list = parser.loadMultiYAML( path_script )
-        yaml_di      = parser.getSingleDict4MultiDocs( dict_as_list )        
-        temp_ls = [] 
-        parser.getKeyRecursively(yaml_di, temp_ls) 
-        '''
-        if you are using `parser.getKeyRecursively` to get all keys , you need to do some trnasformation to get the key names 
-        as the output is a list of tuples so, `[(k1, v1), (k2, v2), (k3, v3)]`
-        '''
-        key_list = [ x_[0] for x_ in temp_ls  ]
-        if (constants.SPEC_KW in key_list ) and ( constants.HOST_PID_KW in key_list ) :
-            vals_for_pid = [] 
-            parser.getValsFromKey(yaml_di, constants.HOST_PID_KW, vals_for_pid)
-            # print(vals_for_pid)
-            vals_for_pid = [str(z_) for z_ in vals_for_pid if isinstance( z_,  bool) ]
-            vals_for_pid = [z_.lower() for z_ in vals_for_pid]
-            if constants.TRUE_LOWER_KW in vals_for_pid: 
-                cnt += 1
-                # For Sarif output 
-                line_number = parser.show_line_for_paths(path_script,constants.HOST_PID_KW)
-                for line in line_number:
-                    result= Result(rule_id='SLIKUBE_05',rule_index= 4, level='error',attachments = [] ,message=Message(text=" Activation of hostPID"))
-                    location = Location(physical_location=PhysicalLocation(artifact_location=ArtifactLocation(uri=path_script),region = Region(start_line =line)))
-                    result.locations = [location]
-                    run.results.append(result)
-                dic[ cnt ] = []
-                
-    return dic  
-
+    try:
+        if ( parser.checkIfValidK8SYaml( path_script )  ): 
+            cnt = 0 
+            dict_as_list = parser.loadMultiYAML( path_script )
+            yaml_di      = parser.getSingleDict4MultiDocs( dict_as_list )        
+            temp_ls = [] 
+            parser.getKeyRecursively(yaml_di, temp_ls) 
+            '''
+            if you are using `parser.getKeyRecursively` to get all keys , you need to do some trnasformation to get the key names 
+            as the output is a list of tuples so, `[(k1, v1), (k2, v2), (k3, v3)]`
+            '''
+            key_list = [ x_[0] for x_ in temp_ls  ]
+            if (constants.SPEC_KW in key_list ) and ( constants.HOST_PID_KW in key_list ) :
+                vals_for_pid = [] 
+                parser.getValsFromKey(yaml_di, constants.HOST_PID_KW, vals_for_pid)
+                # print(vals_for_pid)
+                vals_for_pid = [str(z_) for z_ in vals_for_pid if isinstance( z_,  bool) ]
+                vals_for_pid = [z_.lower() for z_ in vals_for_pid]
+                if constants.TRUE_LOWER_KW in vals_for_pid: 
+                    cnt += 1
+                    # For Sarif output 
+                    line_number = parser.show_line_for_paths(path_script,constants.HOST_PID_KW)
+                    for line in line_number:
+                        result= Result(rule_id='SLIKUBE_05',rule_index= 4, level='error',attachments = [] ,message=Message(text=" Activation of hostPID"))
+                        location = Location(physical_location=PhysicalLocation(artifact_location=ArtifactLocation(uri=path_script),region = Region(start_line =line)))
+                        result.locations = [location]
+                        run.results.append(result)
+                    dic[ cnt ] = []
+        logging.info("Completed scanForTrueIPC for script: %s", path_script)
+        return dic  
+    except Exception as e:
+        logging.error("Error in scanForTruePID for script %s: %s", path_script, str(e))
+        return {}
 
 def scanForTrueIPC(path_script ):
+    logging.info("Starting scanForTrueIPC for script: %s", path_script)
     dic, lis   = {}, []
     if ( parser.checkIfValidK8SYaml( path_script )  ): 
         cnt = 0 
@@ -603,171 +611,188 @@ def scanForTrueIPC(path_script ):
     return dic  
 
 def scanDockerSock(path_script ):
+    logging.info("Starting scanDockerSock for script: %s", path_script)
     dic, lis   = {}, []
-    if ( parser.checkIfValidK8SYaml( path_script )  ): 
-        cnt = 0 
-        dict_as_list = parser.loadMultiYAML( path_script )
-        yaml_di      = parser.getSingleDict4MultiDocs( dict_as_list )        
-        temp_ls = [] 
-        parser.getKeyRecursively(yaml_di, temp_ls) 
-        '''
-        if you are using `parser.getKeyRecursively` to get all keys , you need to do some trnasformation to get the key names 
-        as the output is a list of tuples so, `[(k1, v1), (k2, v2), (k3, v3)]`
-        '''
-        key_list = [ x_[0] for x_ in temp_ls  ]
-        if ( all( z_ in key_list for z_ in constants.DOCKERSOCK_KW_LIST )  ) :
-            all_values = list( parser.getValuesRecursively(yaml_di)  )
-            if (constants.DOCKERSOCK_PATH_KW in all_values):
-                cnt += 1
-                docker_sock_path = parser.keyMiner(yaml_di, constants.DOCKERSOCK_PATH_KW)
-                # The last element of the http_in_spec is the value so the second last element is a . so third last element of the docker_sock_path is the key
+    try:
+        if ( parser.checkIfValidK8SYaml( path_script )  ): 
+            cnt = 0 
+            dict_as_list = parser.loadMultiYAML( path_script )
+            yaml_di      = parser.getSingleDict4MultiDocs( dict_as_list )        
+            temp_ls = [] 
+            parser.getKeyRecursively(yaml_di, temp_ls) 
+            '''
+            if you are using `parser.getKeyRecursively` to get all keys , you need to do some trnasformation to get the key names 
+            as the output is a list of tuples so, `[(k1, v1), (k2, v2), (k3, v3)]`
+            '''
+            key_list = [ x_[0] for x_ in temp_ls  ]
+            if ( all( z_ in key_list for z_ in constants.DOCKERSOCK_KW_LIST )  ) :
+                all_values = list( parser.getValuesRecursively(yaml_di)  )
+                if (constants.DOCKERSOCK_PATH_KW in all_values):
+                    cnt += 1
+                    docker_sock_path = parser.keyMiner(yaml_di, constants.DOCKERSOCK_PATH_KW)
+                    # The last element of the http_in_spec is the value so the second last element is a . so third last element of the docker_sock_path is the key
 
-                line_number = parser.show_line_for_paths(path_script,docker_sock_path[-2])
-                for line in line_number:
-                    result= Result(rule_id='SLIKUBE_07',rule_index= 6, level='error',attachments = [] ,message=Message(text=" Docker Socket Mounting"))
-                    location = Location(physical_location=PhysicalLocation(artifact_location=ArtifactLocation(uri=path_script),region = Region(start_line =line)))
-                    result.locations = [location]
-                    run.results.append(result)
-                dic[ cnt ] = []
-    return dic  
+                    line_number = parser.show_line_for_paths(path_script,docker_sock_path[-2])
+                    for line in line_number:
+                        result= Result(rule_id='SLIKUBE_07',rule_index= 6, level='error',attachments = [] ,message=Message(text=" Docker Socket Mounting"))
+                        location = Location(physical_location=PhysicalLocation(artifact_location=ArtifactLocation(uri=path_script),region = Region(start_line =line)))
+                        result.locations = [location]
+                        run.results.append(result)
+                    dic[ cnt ] = []
+        logging.info("Completed scanDockerSock for script: %s", path_script)
+        return dic
+    except Exception as e:
+        logging.error("Error in scanDockerSock for script %s: %s", path_script, str(e))
+        return {}
 
 def runScanner(dir2scan):
+    logging.info("Starting scanner on directory: %s", dir2scan)
     all_content   = [] 
     all_yml_files = getYAMLFiles(dir2scan)
     val_cnt       = 0 
     for yml_ in all_yml_files:
-        '''
-        Need to filter out `.github/workflows.yml files` first 
-        '''
-        if(parser.checkIfWeirdYAML ( yml_  )  == False): 
-            print ("\n\n--------------- FILE --------------\n\t-->",yml_)
-            if( ( parser.checkIfValidK8SYaml( yml_ ) ) or (  parser.checkIfValidHelm( yml_ ) ) ) and parser.checkParseError( yml_) :
-                # print (" \n\n--------------- FILE RUNNING NOW---------------")
-                # print (yml_)
-                # print("---------------############################### ------\n\n\n")
-                helm_flag             = parser.checkIfValidHelm(yml_)
-                k8s_flag              = parser.checkIfValidK8SYaml(yml_)
-                if (helm_flag):
-                    helm_chart.append(yml_)
-                    print("HELM Chart")
+        try:
+            '''
+            Need to filter out `.github/workflows.yml files` first 
+            '''
+            if(parser.checkIfWeirdYAML ( yml_  )  == False): 
+                print ("\n\n--------------- FILE --------------\n\t-->",yml_)
+                if( ( parser.checkIfValidK8SYaml( yml_ ) ) or (  parser.checkIfValidHelm( yml_ ) ) ) and parser.checkParseError( yml_) :
+                    # print (" \n\n--------------- FILE RUNNING NOW---------------")
+                    # print (yml_)
+                    # print("---------------############################### ------\n\n\n")
+                    helm_flag             = parser.checkIfValidHelm(yml_)
+                    k8s_flag              = parser.checkIfValidK8SYaml(yml_)
+                    if (helm_flag):
+                        helm_chart.append(yml_)
+                        print("HELM Chart")
 
-                if (k8s_flag):
-                    k8s_yaml.append(yml_)
-                    print("Kubernetes YAML")
+                    if (k8s_flag):
+                        k8s_yaml.append(yml_)
+                        print("Kubernetes YAML")
+                    
+                    val_cnt = val_cnt + 1 
+                    print(constants.ANLYZING_KW + yml_ + constants.COUNT_PRINT_KW + yml_ +str(val_cnt) )
                 
-                val_cnt = val_cnt + 1 
-                print(constants.ANLYZING_KW + yml_ + constants.COUNT_PRINT_KW + yml_ +str(val_cnt) )
-               
-                print("get valid taint secrets")
-                within_secret_, templ_secret_, valid_taint_secr  = scanSingleManifest( yml_ )
+                    print("get valid taint secrets")
+                    within_secret_, templ_secret_, valid_taint_secr  = scanSingleManifest( yml_ )
 
 
-                print("get privileged security contexts")
-                valid_taint_privi  = scanForOverPrivileges( yml_ )
-               
-                print("get insecure HTTP")            
-                http_dict             = scanForHTTP( yml_ )
-               
-                print("get missing security context") 
-                absentSecuContextDict = scanForMissingSecurityContext( yml_ )
-               
-                print("get use of default namespace") 
-                defaultNameSpaceDict  = scanForDefaultNamespace( yml_ )
-               
-                print("get missing resource limit")
-                absentResourceDict    = scanForResourceLimits( yml_ )
+                    print("get privileged security contexts")
+                    valid_taint_privi  = scanForOverPrivileges( yml_ )
+                
+                    print("get insecure HTTP")            
+                    http_dict             = scanForHTTP( yml_ )
+                
+                    print("get missing security context") 
+                    absentSecuContextDict = scanForMissingSecurityContext( yml_ )
+                
+                    print("get use of default namespace") 
+                    defaultNameSpaceDict  = scanForDefaultNamespace( yml_ )
+                
+                    print("get missing resource limit")
+                    absentResourceDict    = scanForResourceLimits( yml_ )
 
-                print("get absent rolling update count") 
-                rollingUpdateDict     = scanForRollingUpdates( yml_ )
+                    print("get absent rolling update count") 
+                    rollingUpdateDict     = scanForRollingUpdates( yml_ )
 
-                print("get absent network policy count") 
-                absentNetPolicyDic    = scanForMissingNetworkPolicy( yml_ )
+                    print("get absent network policy count") 
+                    absentNetPolicyDic    = scanForMissingNetworkPolicy( yml_ )
 
-                print(" get hostPIDs where True is assigned ")
-                pid_dic               = scanForTruePID( yml_ )
+                    print(" get hostPIDs where True is assigned ")
+                    pid_dic               = scanForTruePID( yml_ )
 
-                print("get hostIPCs where True is assigned") 
-                ipc_dic               = scanForTrueIPC( yml_ )
-                
-                print("scan for docker sock paths: /var.run/docker.sock") 
-                dockersock_dic        = scanDockerSock( yml_ )
+                    print("get hostIPCs where True is assigned") 
+                    ipc_dic               = scanForTrueIPC( yml_ )
+                    
+                    print("scan for docker sock paths: /var.run/docker.sock") 
+                    dockersock_dic        = scanDockerSock( yml_ )
 
-                print("scan for hostNetwork where True is assigned ")
-                host_net_dic          = scanForHostNetwork( yml_ )
-                
-                print("scan for CAP SYS") 
-                cap_sys_dic           = scanForCAPSYS( yml_ )
-                
-                print("scan for Host Aliases") 
-                host_alias_dic        = scanForHostAliases( yml_ )
-                
-                print("scan for allowPrivilegeEscalation") 
-                allow_privi_dic       = scanForAllowPrivileges( yml_ )
-                
-                print("scan for unconfied seccomp ")
-                unconfied_seccomp_dict= scanForUnconfinedSeccomp( yml_ )
-                
-                print(" scan for cap sys module ")
-                cap_module_dic        = scanForCAPMODULE( yml_ )
-                # need the flags to differentiate legitimate HELM and K8S flags 
-                
-                print (" \n\n---------------END FILE RUNNING--------------")
-                print(constants.SIMPLE_DASH_CHAR )
-                
-                #print(yml_)
-                
-                                      
-                # sarif_json = to_json(sarif_log)
-                # print(sarif_json)
-                # #Write the JSON string to a file
-                # sarif_file = yml_.split('\\')[-1].split('.')[0]+'.sarif'
-                # with open(sarif_file, "w") as f:
-                #     f.write(sarif_json)
+                    print("scan for hostNetwork where True is assigned ")
+                    host_net_dic          = scanForHostNetwork( yml_ )
+                    
+                    print("scan for CAP SYS") 
+                    cap_sys_dic           = scanForCAPSYS( yml_ )
+                    
+                    print("scan for Host Aliases") 
+                    host_alias_dic        = scanForHostAliases( yml_ )
+                    
+                    print("scan for allowPrivilegeEscalation") 
+                    allow_privi_dic       = scanForAllowPrivileges( yml_ )
+                    
+                    print("scan for unconfied seccomp ")
+                    unconfied_seccomp_dict= scanForUnconfinedSeccomp( yml_ )
+                    
+                    print(" scan for cap sys module ")
+                    cap_module_dic        = scanForCAPMODULE( yml_ )
+                    # need the flags to differentiate legitimate HELM and K8S flags 
+                    
+                    print (" \n\n---------------END FILE RUNNING--------------")
+                    print(constants.SIMPLE_DASH_CHAR )
+                    
+                    #print(yml_)
+                    
+                                        
+                    # sarif_json = to_json(sarif_log)
+                    # print(sarif_json)
+                    # #Write the JSON string to a file
+                    # sarif_file = yml_.split('\\')[-1].split('.')[0]+'.sarif'
+                    # with open(sarif_file, "w") as f:
+                    #     f.write(sarif_json)
 
-                all_content.append( ( dir2scan, yml_, within_secret_, templ_secret_, valid_taint_secr, valid_taint_privi, http_dict, absentSecuContextDict, defaultNameSpaceDict, absentResourceDict, rollingUpdateDict, absentNetPolicyDic, pid_dic, ipc_dic, dockersock_dic, host_net_dic, cap_sys_dic, host_alias_dic, allow_privi_dic, unconfied_seccomp_dict, cap_module_dic, k8s_flag, helm_flag ) )
+                    all_content.append( ( dir2scan, yml_, within_secret_, templ_secret_, valid_taint_secr, valid_taint_privi, http_dict, absentSecuContextDict, defaultNameSpaceDict, absentResourceDict, rollingUpdateDict, absentNetPolicyDic, pid_dic, ipc_dic, dockersock_dic, host_net_dic, cap_sys_dic, host_alias_dic, allow_privi_dic, unconfied_seccomp_dict, cap_module_dic, k8s_flag, helm_flag ) )
+                else:
+                    print("Invalid YAML --> ",yml_)
+                    invalid_yaml.append(yml_)
             else:
-                print("Invalid YAML --> ",yml_)
-                invalid_yaml.append(yml_)
-        else:
-            print(" Weird YAML --> ",yml_)
-            weird_yaml.append(yml_)
+                print(" Weird YAML --> ",yml_)
+                weird_yaml.append(yml_)
 
-        sarif_json = to_json(sarif_log)
-        #print(sarif_json)       
+            sarif_json = to_json(sarif_log)
+            #print(sarif_json)       
+        except Exception as e:
+            logging.error("Error scanning file %s: %s", yml_, str(e))
 
+    logging.info("Completed scanning directory: %s", dir2scan)
 
     return all_content, sarif_json
 
 
 def scanForHostNetwork(path_script ):
+    logging.info("Starting scanForHostNetwork for script: %s", path_script)
     dic, lis   = {}, []
-    if ( parser.checkIfValidK8SYaml( path_script )  ): 
-        cnt = 0 
-        dict_as_list = parser.loadMultiYAML( path_script )
-        yaml_di      = parser.getSingleDict4MultiDocs( dict_as_list )        
-        temp_ls = [] 
-        parser.getKeyRecursively(yaml_di, temp_ls) 
-        '''
-        if you are using `parser.getKeyRecursively` to get all keys , you need to do some trnasformation to get the key names 
-        as the output is a list of tuples so, `[(k1, v1), (k2, v2), (k3, v3)]`
-        '''
-        key_list = [ x_[0] for x_ in temp_ls  ]
-        if (constants.SPEC_KW in key_list ) and ( constants.HOST_NET_KW in key_list ) :
-            vals_for_net = [] 
-            parser.getValsFromKey(yaml_di, constants.HOST_NET_KW, vals_for_net)
-            # print(vals_for_net)
-            vals_for_net = [str(z_) for z_ in vals_for_net if isinstance( z_,  bool) ]
-            vals_for_net = [z_.lower() for z_ in vals_for_net]
-            if constants.TRUE_LOWER_KW in vals_for_net: 
-                cnt += 1 
-                line_number = parser.show_line_for_paths(path_script,constants.HOST_NET_KW)
-                for line in line_number:
-                    result= Result(rule_id='SLIKUBE_04',rule_index= 3, level='error',attachments = [] ,message=Message(text=" Activation of hostNetwork"))
-                    location = Location(physical_location=PhysicalLocation(artifact_location=ArtifactLocation(uri=path_script),region = Region(start_line =line)))
-                    result.locations = [location]
-                    run.results.append(result)
-                dic[ cnt ] = []
-    return dic  
+    try:
+        if ( parser.checkIfValidK8SYaml( path_script )  ): 
+            cnt = 0 
+            dict_as_list = parser.loadMultiYAML( path_script )
+            yaml_di      = parser.getSingleDict4MultiDocs( dict_as_list )        
+            temp_ls = [] 
+            parser.getKeyRecursively(yaml_di, temp_ls) 
+            '''
+            if you are using `parser.getKeyRecursively` to get all keys , you need to do some trnasformation to get the key names 
+            as the output is a list of tuples so, `[(k1, v1), (k2, v2), (k3, v3)]`
+            '''
+            key_list = [ x_[0] for x_ in temp_ls  ]
+            if (constants.SPEC_KW in key_list ) and ( constants.HOST_NET_KW in key_list ) :
+                vals_for_net = [] 
+                parser.getValsFromKey(yaml_di, constants.HOST_NET_KW, vals_for_net)
+                # print(vals_for_net)
+                vals_for_net = [str(z_) for z_ in vals_for_net if isinstance( z_,  bool) ]
+                vals_for_net = [z_.lower() for z_ in vals_for_net]
+                if constants.TRUE_LOWER_KW in vals_for_net: 
+                    cnt += 1 
+                    line_number = parser.show_line_for_paths(path_script,constants.HOST_NET_KW)
+                    for line in line_number:
+                        result= Result(rule_id='SLIKUBE_04',rule_index= 3, level='error',attachments = [] ,message=Message(text=" Activation of hostNetwork"))
+                        location = Location(physical_location=PhysicalLocation(artifact_location=ArtifactLocation(uri=path_script),region = Region(start_line =line)))
+                        result.locations = [location]
+                        run.results.append(result)
+                    dic[ cnt ] = []
+        logging.info("Completed scanForHostNetwork for script: %s", path_script)
+        return dic
+    except Exception as e:
+        logging.error("Error in scanForHostNetwork for script %s: %s", path_script, str(e))
+        return {}
 
 
 def scanForCAPSYS(path_script ):
@@ -1006,7 +1031,7 @@ def scanForUnconfinedSeccomp(path_script ):
 
 if __name__ == '__main__':
     #provide directory to scan
-    dir2scan = r'C:\Users\..'
+    dir2scan = r'C:\Users\jlewi\OneDrive\Desktop\software_quality_assurance'
     a,b = runScanner(dir2scan)
     with open("test-scanner.sarif", "w") as f:
         f.write(b)
