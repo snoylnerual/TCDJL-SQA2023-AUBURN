@@ -6,6 +6,7 @@ Source Code to Run Tool on All Kubernetes Manifests
 import scanner 
 import pandas as pd 
 import constants
+import logging
 
 def getCountFromAnalysis(ls_):
     list2ret           = []
@@ -52,12 +53,12 @@ def main(directory: Path = typer.Argument(..., exists=True, help="Absolute path 
     Run KubeSec in a Kubernetes directory and get results in a CSV file.
 
     """
-    content_as_ls, sarif_json   = scanner.runScanner( directory )
+    content_as_ls, sarif_json = scanner.runScanner( directory )
     
     with open("SLIKUBE.sarif", "w") as f:
-      f.write(sarif_json)
+        f.write(sarif_json)
 
-    df_all          = pd.DataFrame( getCountFromAnalysis( content_as_ls ) )
+    df_all = pd.DataFrame( getCountFromAnalysis( content_as_ls ) )
     outfile = Path(directory, "slikube_results.csv")
 
     df_all.to_csv( outfile, header= constants.CSV_HEADER , index=False, encoding= constants.CSV_ENCODING )
