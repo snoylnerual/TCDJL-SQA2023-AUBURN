@@ -1031,7 +1031,7 @@ def scanForUnconfinedSeccomp(path_script ):
 
 if __name__ == '__main__':
     #provide directory to scan
-    dir2scan = r'C:\Users\jlewi\OneDrive\Desktop\software_quality_assurance'
+    dir2scan = r'C:\Users'
     a,b = runScanner(dir2scan)
     with open("test-scanner.sarif", "w") as f:
         f.write(b)
