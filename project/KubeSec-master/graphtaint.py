@@ -14,15 +14,19 @@ def getYAMLFiles(path_to_dir):
     logger.info("Logging YAML File Retrieval")
     logger.info("Checking valid path to file")
     valid_  = [] 
-    for root_, dirs, files_ in os.walk( path_to_dir ):
-        for file_ in files_:
-            full_p_file = os.path.join(root_, file_)
-            if(os.path.exists(full_p_file)):
-                logger.info('Found path to file: ', str(full_p_file))
-                logger.info("Checking if file is a valid YAML file")
-                if (full_p_file.endswith( constants.YAML_EXTENSION  ) or full_p_file.endswith( constants.YML_EXTENSION  )  ):
-                    valid_.append(full_p_file)
-                    logger.info('Valid file found: ', str(valid_))
+    try:
+        for root_, dirs, files_ in os.walk( path_to_dir ):
+            for file_ in files_:
+                full_p_file = os.path.join(root_, file_)
+                if(os.path.exists(full_p_file)):
+                    logger.info('Found path to file: %s', full_p_file)
+                    logger.info("Checking if file is a valid YAML file")
+                    if (full_p_file.endswith( constants.YAML_EXTENSION  ) or full_p_file.endswith( constants.YML_EXTENSION  )  ):
+                        valid_.append(full_p_file)
+                        logger.info('Valid file found: %s', valid_)
+        logger.info('Successful YAML File Retrieval at %s', path_to_dir)
+    except Exception as e:
+        logger.info('Error Retrieving YAML file at %s: %s', path_to_dir, str(e))    
     return valid_ 
 
 def constructHelmString(hiera_tuple): 
@@ -83,33 +87,37 @@ def mineSecretGraph( path2script, yaml_dict , secret_dict ):
     logger.info("Logging Secret Graph Mining")
     within_match_head = None 
     hierarchy_list = []
-    for k_, v_ in secret_dict.items():
-        for tup_item in v_:
-            for value in tup_item:
-                hierarchy_keys = parser.keyMiner(yaml_dict, value)
-                hierarchy_keys = [x_ for x_ in hierarchy_keys if x_ != constants.YAML_SKIPPING_TEXT ] 
-                compo_hiera_keys = [ constants.DOT_SYMBOL.join(str_) for str_ in combinations( hierarchy_keys , 2 )] ## take 2 strings at a time 
-                for h_key in hierarchy_keys:
-                    hierarchy_list.append( (h_key, k_ , v_) )
+    try:
+        for k_, v_ in secret_dict.items():
+            for tup_item in v_:
+                for value in tup_item:
+                    hierarchy_keys = parser.keyMiner(yaml_dict, value)
+                    hierarchy_keys = [x_ for x_ in hierarchy_keys if x_ != constants.YAML_SKIPPING_TEXT ] 
+                    compo_hiera_keys = [ constants.DOT_SYMBOL.join(str_) for str_ in combinations( hierarchy_keys , 2 )] ## take 2 strings at a time 
+                    for h_key in hierarchy_keys:
+                        hierarchy_list.append( (h_key, k_ , v_) )
+                    '''
+                    the purpose of composite hierarchy keys is to get nested values that are referenced 
+                    taking 2 strings at a time 
+                    '''
+                    for compo_h_key in compo_hiera_keys:
+                        hierarchy_list.append( ( compo_h_key, k_, v_  ) )
+        
+        templ_match_list = []
+        if( parser.checkIfValidHelm(path2script) ):                    
+            templ_match_list = getMatchingTemplates( path2script, hierarchy_list  )
+        else:
+            if( len(hierarchy_list) > 0 ):
                 '''
-                the purpose of composite hierarchy keys is to get nested values that are referenced 
-                taking 2 strings at a time 
+                check if valueFrom exists 
                 '''
-                for compo_h_key in compo_hiera_keys:
-                    hierarchy_list.append( ( compo_h_key, k_, v_  ) )
-    
-    templ_match_list = []
-    if( parser.checkIfValidHelm(path2script) ):                    
-        templ_match_list = getMatchingTemplates( path2script, hierarchy_list  )
-    else:
-        if( len(hierarchy_list) > 0 ):
-            '''
-            check if valueFrom exists 
-            '''
-            if constants.VALU_FROM_KW not in hierarchy_list: 
-                    within_match_head = hierarchy_list[0]
-    valid_taints = getValidTaints( templ_match_list ) 
-    # print( within_match_head ) 
+                if constants.VALU_FROM_KW not in hierarchy_list: 
+                        within_match_head = hierarchy_list[0]
+        valid_taints = getValidTaints( templ_match_list ) 
+        logger.info('Successful Mining of Secret Graph at %s', path2script)
+        # print( within_match_head ) 
+    except Exception as e:
+        logger.info('Error Mining Secret Graph at %s: %s', path2script, str(e))
     return within_match_head, templ_match_list, valid_taints 
 
 
@@ -118,15 +126,19 @@ def getSHFiles(path_to_dir):
     logger.info("Logging SH File Retrieval")
     logger.info("Checking valid path to file")
     valid_  = [] 
-    for root_, _, files_ in os.walk( path_to_dir ):
-        for file_ in files_:
-            full_p_file = os.path.join(root_, file_)
-            if(os.path.exists(full_p_file)):
-                logger.info('Found path to file: ', str(full_p_file))
-                logger.info("Checking if file is a valid SH file")
-                if (full_p_file.endswith( constants.SH_EXTENSION  )  ):
-                    valid_.append(full_p_file)
-                    logger.info('Valid file found: ', str(valid_))
+    try:
+        for root_, _, files_ in os.walk( path_to_dir ):
+            for file_ in files_:
+                full_p_file = os.path.join(root_, file_)
+                if(os.path.exists(full_p_file)):
+                    logger.info('Found path to file: %s', full_p_file)
+                    logger.info("Checking if file is a valid SH file")
+                    if (full_p_file.endswith( constants.SH_EXTENSION  )  ):
+                        valid_.append(full_p_file)
+                        logger.info('Valid file found: %s', valid_)
+            logger.info('Successful SH File Retrieval at %s', path_to_dir)
+    except Exception as e:
+        logger.info('Error in SH File Retrieval at %s: %s', path_to_dir, str(e))
     return valid_ 
 
 

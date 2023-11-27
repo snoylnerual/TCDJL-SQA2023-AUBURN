@@ -10,10 +10,9 @@ import os
 import pandas as pd 
 import numpy as np
 import json
+import simpleLogger as logger
 from sarif_om import *
 from jschema_to_python.to_json import to_json
-from simpleLogger import createLoggerObj
-logging = createLoggerObj()
 
 
 '''Global SarifLog Object definition and Rule definition for SLI-KUBE. Rule IDs are ordered by the sequence as it appears in the TOSEM paper'''
@@ -543,7 +542,8 @@ def scanForMissingNetworkPolicy(path_script ):
     return dic  
 
 def scanForTruePID(path_script ):
-    logging.info("Starting scanForTruePID for script: %s", path_script)
+    logger.info("===========================================================================")
+    logger.info("Starting scanForTruePID for script: %s", path_script)
     dic, lis   = {}, []
     try:
         if ( parser.checkIfValidK8SYaml( path_script )  ): 
@@ -573,14 +573,15 @@ def scanForTruePID(path_script ):
                         result.locations = [location]
                         run.results.append(result)
                     dic[ cnt ] = []
-        logging.info("Completed scanForTrueIPC for script: %s", path_script)
+        logger.info("Completed scanForTruePID for script: %s", path_script)
         return dic  
     except Exception as e:
-        logging.error("Error in scanForTruePID for script %s: %s", path_script, str(e))
+        logger.error("Error in scanForTruePID for script %s: %s", path_script, str(e))
         return {}
 
 def scanForTrueIPC(path_script ):
-    logging.info("Starting scanForTrueIPC for script: %s", path_script)
+    logger.info("===========================================================================")
+    logger.info("Starting scanForTrueIPC for script: %s", path_script)
     dic, lis   = {}, []
     if ( parser.checkIfValidK8SYaml( path_script )  ): 
         cnt = 0 
@@ -611,7 +612,8 @@ def scanForTrueIPC(path_script ):
     return dic  
 
 def scanDockerSock(path_script ):
-    logging.info("Starting scanDockerSock for script: %s", path_script)
+    logger.info("===========================================================================")
+    logger.info("Starting scanDockerSock for script: %s", path_script)
     dic, lis   = {}, []
     try:
         if ( parser.checkIfValidK8SYaml( path_script )  ): 
@@ -639,14 +641,15 @@ def scanDockerSock(path_script ):
                         result.locations = [location]
                         run.results.append(result)
                     dic[ cnt ] = []
-        logging.info("Completed scanDockerSock for script: %s", path_script)
+        logger.info("Completed scanDockerSock for script: %s", path_script)
         return dic
     except Exception as e:
-        logging.error("Error in scanDockerSock for script %s: %s", path_script, str(e))
+        logger.error("Error in scanDockerSock for script %s: %s", path_script, str(e))
         return {}
 
 def runScanner(dir2scan):
-    logging.info("Starting scanner on directory: %s", dir2scan)
+    logger.info("===========================================================================")
+    logger.info("Starting scanner on directory: %s", dir2scan)
     all_content   = [] 
     all_yml_files = getYAMLFiles(dir2scan)
     val_cnt       = 0 
@@ -751,15 +754,16 @@ def runScanner(dir2scan):
             sarif_json = to_json(sarif_log)
             #print(sarif_json)       
         except Exception as e:
-            logging.error("Error scanning file %s: %s", yml_, str(e))
+            logger.error("Error scanning file %s: %s", yml_, str(e))
 
-    logging.info("Completed scanning directory: %s", dir2scan)
+    logger.info("Completed scanning directory: %s", dir2scan)
 
     return all_content, sarif_json
 
 
 def scanForHostNetwork(path_script ):
-    logging.info("Starting scanForHostNetwork for script: %s", path_script)
+    logger.info("===========================================================================")
+    logger.info("Starting scanForHostNetwork for script: %s", path_script)
     dic, lis   = {}, []
     try:
         if ( parser.checkIfValidK8SYaml( path_script )  ): 
@@ -788,10 +792,10 @@ def scanForHostNetwork(path_script ):
                         result.locations = [location]
                         run.results.append(result)
                     dic[ cnt ] = []
-        logging.info("Completed scanForHostNetwork for script: %s", path_script)
+        logger.info("Completed scanForHostNetwork for script: %s", path_script)
         return dic
     except Exception as e:
-        logging.error("Error in scanForHostNetwork for script %s: %s", path_script, str(e))
+        logger.error("Error in scanForHostNetwork for script %s: %s", path_script, str(e))
         return {}
 
 
