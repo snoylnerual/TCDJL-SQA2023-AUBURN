@@ -1,6 +1,6 @@
 # SQA Course Project
-## TDCDJL-SQA2023-AUBURN
-# Lauren Lyons, Caleb Johnson, Dean Lee, & Jordyn Lewis
+TDCDJL-SQA2023-AUBURN
+Lauren Lyons, Caleb Johnson, Dean Lee, & Jordyn Lewis
 
 ## Group Activities
 Completed - Unpack the project KubeSec.zip.
