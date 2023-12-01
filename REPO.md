@@ -25,6 +25,8 @@ This part of the project pulls in material learned in Workshop 6 and Workshop 4.
 
 - As learned from the website, https://www.atlassian.com/git/tutorials/git-hooks, Git Hooks are local to any given Git repository, and they are not copied over to the new repository when you run git clone. And, since hooks are local, .git/hooks directory isn’t cloned with the rest of your project, nor is it under version control. So, to combat this issue, I have copied the pre-commit file and pasted it in the main folder of the Git repo. To use it, simply copy and paste it into your local .git/hooks/ folder. Then once a commit is made, the git hook will run. The image below shows an example of it being run on my computer after the pre-commit file has been moved to the appropriate location.
 
+![alt text](https://github.com/snoylnerual/TCDJL-SQA2023-AUBURN/blob/main/GitHooksScreenshot.png?raw=true)
+
 ### Assigned to Deal Lee
 4.b. Create a fuzz.py file that will automatically fuzz 5 Python methods of your choice. Report any bugs you discovered by the fuzz.py file. fuzz.py will
 be automatically executed from GitHub actions.
