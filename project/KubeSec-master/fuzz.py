@@ -1,5 +1,5 @@
 # fuzz.py
-# This file fuzzes KubeSec
+# This file fuzzes KubeSec-master
 
 import parser
 
