@@ -1,5 +1,7 @@
-import parser
+# fuzz.py
+# This file fuzzes KubeSec
 
+import parser
 
 def fuzzValues():
     unexpected_inputs = [1, "abc", True, "/", "./environment.yml"]
